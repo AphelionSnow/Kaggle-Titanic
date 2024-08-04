@@ -113,7 +113,7 @@ class InputSampler():
             # Calculate the score with the optimal threshold
             predicted = (probas_ >= optimal_threshold).astype(int)
             score = np.mean(predicted == self.y_test)
-            results.append([score, combo])
+            results.append([score, pipeline, combo, optimal_threshold])
             self.X_train = None
             self.X_test = None
             self.y_train = None
