@@ -31,9 +31,53 @@ class InputSampler():
         self.y_test = None
 
     def sampleRFC(self):
-        # TODO 2
+        # TODO 1
         # RandomForest model. Returns list of models with highest cv scores.
-        pass
+        # Will implement bounded_combinations variation later
+        param_dist = {
+            'classifier__n_estimators': randint(100, 1000),
+            'classifier__max_features': [None, 'sqrt', 'log2', 0.5],
+            'classifier__max_depth': randint(4, 12),
+            'classifier__min_samples_split': randint(2, 11),
+            'classifier__min_samples_leaf': randint(1, 5),
+            'classifier__bootstrap': [True, False],
+            'classifier__criterion': ['gini', 'entropy']
+        }
+        
+        highest = 0
+        iteration = 0
+        
+        results = []
+        for combo in self.var_combinations:
+            num_vars = combo[0]
+            cat_vars = combo[1]
+            pipeline = self._create_pipeline(num_vars, cat_vars, 'Forest')
+            pipeline = RandomizedSearchCV(estimator=pipeline, param_distributions=param_dist,
+                                              n_iter=100, cv=5, verbose=2, random_state=42, n_jobs=-1)
+            
+            # Fit the pipeline on the training data
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.data[num_vars+cat_vars], self.data['Survived'], test_size=0.2, random_state=42)
+            pipeline.fit(self.X_train[num_vars+cat_vars], self.y_train)
+
+            # Retrieve the best parameters and model
+            best_params = pipeline.best_params_
+            best_rf = pipeline.best_estimator_
+            
+            # Return score with the optimal parameters
+            score = best_rf.score(self.X_test, self.y_test)
+            results.append([score, pipeline, combo])
+            print([score, pipeline, combo])
+            print('Highest =', highest)
+            if score > highest:
+                highest = score
+            iteration += 1
+            print('Iteration =', iteration)
+            self.X_train = None
+            self.X_test = None
+            self.y_train = None
+            self.y_test = None
+            
+        return sorted(results, key=lambda x:x[0], reverse=True)
     
     def sampleLogR(self):
         # LogisticRegression model sampling. 
@@ -42,7 +86,7 @@ class InputSampler():
         # Maybe use cv scores later if logistic regression competes with other models
 
         results = []
-        for combo in self.var_combinations:
+        for combo in self.var_combinations: # will implement bounded_combinations later
             num_vars = combo[0]
             cat_vars = combo[1]
             pipeline = self._create_pipeline(num_vars, cat_vars)
@@ -67,7 +111,7 @@ class InputSampler():
         return sorted(results, key=lambda x:x[0], reverse=True)
     
     def sampleFull(self):
-        # TODO 3
+        # TODO 2
         # Sample on all models and combine resulting arrays.
         # returns results sorted by mean cv score.
         pass
@@ -123,7 +167,7 @@ class InputSampler():
                 bounded.append(combination)
         self.bounded_combinations = bounded
     
-    def _create_pipeline(self, num_vars, cat_vars):
+    def _create_pipeline(self, num_vars, cat_vars, type='Log'):
         
         # Create a preprocessing pipeline
         transformers = []
@@ -133,8 +177,14 @@ class InputSampler():
             transformers.append(('onehot', OneHotEncoder(), cat_vars))
     
         preprocessor = ColumnTransformer(transformers=transformers)
-        pipeline = Pipeline(steps=[
-            ('preprocessor', preprocessor),
-            ('classifier', LogisticRegression(max_iter=500))
-        ])
+        if type == 'Log':
+            pipeline = Pipeline(steps=[
+                ('preprocessor', preprocessor),
+                ('classifier', LogisticRegression(max_iter=500))
+            ])
+        elif type == 'Forest':
+            pipeline = Pipeline(steps=[
+                ('preprocessor', preprocessor),
+                ('classifier', RandomForestClassifier(random_state=42))
+            ])
         return pipeline
