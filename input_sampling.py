@@ -73,12 +73,36 @@ class InputSampler():
         pass
     
     def setRequired(self, req):
-        # set variables that are required to be used in every sampling combination 
+        # set variables that are required to be used in every sampling combination. Must be a list input.
         # initiates self.bounded_combinations as a subset of self.combinations that include all required variables
-        pass
+        if type(req) != list:
+            print('Argument type must be list')
+            return
+        
+        bounded = []
+        for combination in self.combinations:
+            # see if all required cars are in the combination
+            exists = True
+            for var in req:
+                if var not in combination[0] and var not in combination[1]:
+                    exists = False
+                    break
+            if exists:
+                bounded.append(combination)
+        self.bounded_combinations = bounded
+                
     
     def _split_train_test(self):
         # split the X and y 
+        pass
+    
+    def _preprocess(self):
+        # helper function for preprocessor to make code more readable
+        pass
+    
+    def _combination_decoder(self):
+        # splits combinations back into numerical and categorical classifications
+        # deprecating this function by resplitting at time of combination
         pass
 
 
