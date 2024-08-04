@@ -25,21 +25,10 @@ class InputSampler():
         self.var_combinations = self._var_combinations()
         self.bounded_combinations = None
         
-        # self.X = self.data[cat+num]
-        # self.y = data['Survived']
-        # self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.data[num+cat], self.data['Survived'], test_size=0.2, random_state=42)
         self.X_train = None
         self.X_test = None
         self.y_train = None
         self.y_test = None
-
-        # self.ct = Pipeline(steps=[ # categorical transformer
-        # ('onehot', OneHotEncoder(handle_unknown='ignore'))
-        # ])
-        # self.nt = Pipeline(steps=[ # numerical transformer
-        #     ('scaler', StandardScaler())
-        # ])
-
 
     def sampleRFC(self):
         # TODO 2
@@ -47,55 +36,11 @@ class InputSampler():
         pass
     
     def sampleLogR(self):
-        # TODO 1
         # LogisticRegression model sampling. 
         # Returns list of cv scores for Logistic Regression fits after checking every combination of variables. Sorted descending.
         # Future idea: test for optimal train/test split ratio
         # Maybe use cv scores later if logistic regression competes with other models
-        # cv_scores = []
-        
-        # if self.bounded_combinations:
-        #     for combination in self.bounded_combinations:
-                
-        #         # Debugging: Check the shapes and content of X_train before fitting
-        #         # print("Shape of X_train:", self.X_train.shape)
-        #         # print("First few rows of X_train:\n", self.X_train.head())
-        #         # print("Categorical features: ", combination[0])
-        #         # print("Numerical features: ", combination[1])
-                
-        #         # preprocessor = self._preprocess(combination[0], combination[1])
-        #         # model = Pipeline(steps=[('preprocessor', preprocessor),
-        #         #                         ('classifier', LogisticRegression())
-        #         # ])
-        #         model = LogisticRegression()
-        #         model.fit(self.X_train, self.y_train)
-        #         y_prob = model.predict_proba(self.X_test)[:, 1]
-        #         y_pred = (y_prob >= self._logr_find_threshold(y_prob)).astype(int)
-        #         accuracy = accuracy_score(self.y_test, y_pred)
-        #         cv_scores.append([accuracy, combination])
-        # else:
-        #     for combination in self.var_combinations:
-                
-        #         # Debugging: Check the shapes and content of X_train before fitting
-        #         # print("Categorical features: ", combination[1])
-        #         # print("Numerical features: ", combination[0], '\n')
-                
-        #         # preprocessor = self._preprocess(combination[1], combination[0])
-        #         # model = Pipeline(steps=[('preprocessor', preprocessor),
-        #         #                         ('classifier', LogisticRegression())
-        #         # ])
-                
-        #         # print("Combination:", combination)
-        #         # print(X_train)
-        #         model = LogisticRegression()
-        #         model.fit(self.X_train, self.y_train)
-        #         y_prob = model.predict_proba(self.X_test)[:, 1]
-        #         y_pred = (y_prob >= self._logr_find_threshold(y_prob)).astype(int)
-        #         accuracy = accuracy_score(self.y_test, y_pred)
-        #         cv_scores.append([accuracy, combination])
-                
-        # return sorted(cv_scores, key=lambda x:x[0], reverse=True)
-        
+
         results = []
         for combo in self.var_combinations:
             num_vars = combo[0]
@@ -144,21 +89,19 @@ class InputSampler():
         var_combinations_tuples = []
         for r in range(len(self.num)+len(self.cat)-1):
             var_combinations_tuples.extend(combinations((self.num+self.cat), r+1))
+            
         var_combinations = []
-        # print(var_combinations_tuples)
         for tuple in var_combinations_tuples:
             num_vars = []
             cat_vars = []
             vars = list(tuple)
-            # print('vars', vars)
             for var in vars:
-                # print('var', var)
                 if var in self.num:
                     num_vars.append(var)
                 elif var in self.cat:
                     cat_vars.append(var)
-            # print(num_vars, cat_vars)
             var_combinations.append([num_vars, cat_vars])
+            
         return var_combinations
     
     def setRequired(self, req):
@@ -180,32 +123,7 @@ class InputSampler():
                 bounded.append(combination)
         self.bounded_combinations = bounded
     
-    # def _preprocess(self, num, cat):
-    #     # helper function for preprocessor handling
-    #     preprocessor = None
-    #     if not num:
-    #         preprocessor = ColumnTransformer(
-    #         transformers=[
-    #             ('cat', self.ct, cat)
-    #             ]
-    #         )
-    #     elif not cat:
-    #         preprocessor = ColumnTransformer(
-    #         transformers=[
-    #             ('num', self.nt, num)
-    #             ]
-    #         )
-    #     else:
-    #         preprocessor = ColumnTransformer(
-    #         transformers=[
-    #             ('num', StandardScaler(), num)
-    #             ('cat', OneHotEncoder(handle_unknown='ignore'), cat)
-    #             ]
-    #         )
-    #     return preprocessor
-    
     def _create_pipeline(self, num_vars, cat_vars):
-        feature_selector = ColumnSelector(columns=num_vars + cat_vars)
         
         # Create a preprocessing pipeline
         transformers = []
@@ -216,30 +134,7 @@ class InputSampler():
     
         preprocessor = ColumnTransformer(transformers=transformers)
         pipeline = Pipeline(steps=[
-            # ('selector', feature_selector),
             ('preprocessor', preprocessor),
             ('classifier', LogisticRegression(max_iter=500))
         ])
         return pipeline
-    
-    def _encode_data(self, data):
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('num', StandardScaler(), self.num),
-                ('cat', OneHotEncoder(handle_unknown='ignore'), self.cat)
-            ]
-        )
-        return preprocessor.fit_transform(data)
-
-
-    
-# GPT code
-class ColumnSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, columns):
-        self.columns = columns
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        return X[self.columns]
