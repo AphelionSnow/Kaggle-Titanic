@@ -4,7 +4,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import r2_score, accuracy_score, roc_curve, auc
+from sklearn.metrics import r2_score, accuracy_score, roc_curve, auc, f1_score
 import pandas as pd
 import os
 import numpy as np
@@ -27,7 +27,6 @@ class InputSampler():
         
         self.X = X
         self.y = y
-        self.model = None
         self.ct = Pipeline(steps=[ # categorical transformer
         ('onehot', OneHotEncoder(handle_unknown='ignore'))
         ])
@@ -37,34 +36,28 @@ class InputSampler():
 
 
     def sampleRFC(self):
-        # TODO
-        # RandomForest model
-        # preprocessor = ColumnTransformer(
-        # transformers=[
-        #     ('num', self.nt, numerical),
-        #     ('cat', self.ct, categorical)
-        #     ]
-        # )
+        # TODO 4
+        # RandomForest model. Returns list of models with highest cv scores.
         pass
     
     def sampleLogR(self):
-        # TODO
-        # LogisticRegression model. Returns cv scores for optimized Logistic Regression model
+        # TODO 3
+        # LogisticRegression model. Returns cv scores for optimized Logistic Regression model.
         pass
     
     def _logr_find_threshold(self):
-        # TODO
-        # Finds optimal threshold for Logistic Regression model
+        # TODO 1
+        # Finds optimal threshold for Logistic Regression model.
         pass
     
     def sampleFull(self):
-        # TODO
-        # Sample on all models and combine resulting arrays
-        # returns results sorted by mean cv score
+        # TODO 5
+        # Sample on all models and combine resulting arrays.
+        # returns results sorted by mean cv score.
         pass
     
     def _var_combinations(self):
-        # TODO
+        # TODO 2
         # create a list of all combinations of provided variables, split by data type
         # output the combinations to self.combinations on initialization of object
         pass
@@ -88,15 +81,30 @@ class InputSampler():
                 bounded.append(combination)
         self.bounded_combinations = bounded
     
-    def _preprocess(self):
-        # TODO
-        # helper function for preprocessor to make code more readable
-        pass
-    
-    def _combination_decoder(self):
-        # splits combinations back into numerical and categorical classifications
-        # deprecating this function by resplitting at time of combination
-        pass
+    def _preprocess(self, num, cat):
+        # helper function for preprocessor handling
+        preprocessor = None
+        if not num:
+            preprocessor = ColumnTransformer(
+            transformers=[
+                ('cat', self.ct, cat)
+                ]
+            )
+        elif not cat:
+            preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', self.nt, num)
+                ]
+            )
+        else:
+            preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', self.nt, num)
+                ('cat', self.ct, cat)
+                ]
+            )
+        
+        return preprocessor
 
 
     
