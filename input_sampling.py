@@ -34,12 +34,12 @@ class InputSampler():
         # TODO 1
         # RandomForest model. Returns list of models with highest cv scores.
         # Will implement bounded_combinations variation later
-        param_dist = {
-            'classifier__n_estimators': randint(100, 1000),
-            'classifier__max_features': [None, 'sqrt', 'log2', 0.5],
-            'classifier__max_depth': randint(4, 12),
-            'classifier__min_samples_split': randint(2, 11),
-            'classifier__min_samples_leaf': randint(1, 5),
+        param_dist = { # 'classifier__' prefix allows use in pipeline
+            'classifier__n_estimators': [int(x) for x in range(100, 1200, 100)],
+            'classifier__max_features': [None, 'sqrt', 'log2'],
+            'classifier__max_depth': [int(x) for x in range(10, 110, 10)] + [None],
+            'classifier__min_samples_split': [2, 5, 10],
+            'classifier__min_samples_leaf': [1, 2, 4],
             'classifier__bootstrap': [True, False],
             'classifier__criterion': ['gini', 'entropy']
         }
@@ -53,7 +53,7 @@ class InputSampler():
             cat_vars = combo[1]
             pipeline = self._create_pipeline(num_vars, cat_vars, 'Forest')
             pipeline = RandomizedSearchCV(estimator=pipeline, param_distributions=param_dist,
-                                              n_iter=100, cv=5, verbose=2, random_state=42, n_jobs=-1)
+                                              n_iter=250, cv=5, verbose=2, random_state=42, n_jobs=-1)
             
             # Fit the pipeline on the training data
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.data[num_vars+cat_vars], self.data['Survived'], test_size=0.2, random_state=42)
@@ -65,8 +65,8 @@ class InputSampler():
             
             # Return score with the optimal parameters
             score = best_rf.score(self.X_test, self.y_test)
-            results.append([score, pipeline, combo])
-            print([score, pipeline, combo])
+            results.append([score, pipeline, combo, [pipeline.best_params_, pipeline.best_score_, pipeline.best_estimator_]])
+            print([score, pipeline, combo, [pipeline.best_params_, pipeline.best_score_, pipeline.best_estimator_]])
             print('Highest =', highest)
             if score > highest:
                 highest = score
@@ -77,7 +77,7 @@ class InputSampler():
             self.y_train = None
             self.y_test = None
             
-        return sorted(results, key=lambda x:x[0], reverse=True)
+        return results
     
     def sampleLogR(self):
         # LogisticRegression model sampling. 
@@ -131,8 +131,8 @@ class InputSampler():
         # create a list of all combinations of provided variables, split by data type
         # output the combinations to self.combinations on initialization of object
         var_combinations_tuples = []
-        for r in range(len(self.num)+len(self.cat)-1):
-            var_combinations_tuples.extend(combinations((self.num+self.cat), r+1))
+        for r in range(2):
+            var_combinations_tuples.extend(combinations((self.num+self.cat), r+6))
             
         var_combinations = []
         for tuple in var_combinations_tuples:
