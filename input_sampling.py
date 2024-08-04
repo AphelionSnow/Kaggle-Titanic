@@ -27,11 +27,6 @@ class InputSampler():
         
         self.X = X
         self.y = y
-        self.X_train = None
-        self.y_train = None
-        self.X_test = None
-        self.y_test = None
-        
         self.model = None
         self.ct = Pipeline(steps=[ # categorical transformer
         ('onehot', OneHotEncoder(handle_unknown='ignore'))
@@ -39,9 +34,10 @@ class InputSampler():
         self.nt = Pipeline(steps=[ # numerical transformer
             ('scaler', StandardScaler())
         ])
-        
-        
+
+
     def sampleRFC(self):
+        # TODO
         # RandomForest model
         # preprocessor = ColumnTransformer(
         # transformers=[
@@ -52,23 +48,24 @@ class InputSampler():
         pass
     
     def sampleLogR(self):
-        # LogisticRegression model
+        # TODO
+        # LogisticRegression model. Returns cv scores for optimized Logistic Regression model
         pass
     
-    cat_trans = Pipeline(steps=[
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
-    ])
-    num_trans = Pipeline(steps=[
-        ('scaler', StandardScaler())
-    ])
+    def _logr_find_threshold(self):
+        # TODO
+        # Finds optimal threshold for Logistic Regression model
+        pass
     
     def sampleFull(self):
+        # TODO
         # Sample on all models and combine resulting arrays
         # returns results sorted by mean cv score
         pass
     
     def _var_combinations(self):
-        # create a list of all combinations of provided variables
+        # TODO
+        # create a list of all combinations of provided variables, split by data type
         # output the combinations to self.combinations on initialization of object
         pass
     
@@ -90,13 +87,9 @@ class InputSampler():
             if exists:
                 bounded.append(combination)
         self.bounded_combinations = bounded
-                
-    
-    def _split_train_test(self):
-        # split the X and y 
-        pass
     
     def _preprocess(self):
+        # TODO
         # helper function for preprocessor to make code more readable
         pass
     
